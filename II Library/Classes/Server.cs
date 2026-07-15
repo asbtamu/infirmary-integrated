@@ -49,21 +49,17 @@ namespace II.Server {
         public static string FormatForPHP (string inc)
             => inc.Replace ("#", "_").Replace ("$", "_");
 
-        public async Task Get_LatestVersion () {
-            HttpClient hc = new ();
+        public Task Get_LatestVersion () {
+            /* Institutional deployment: update check disabled.
+             * Upstream behavior called http://server.infirmary-integrated.com/version.php
+             * on startup and via the manual menu check. Disabled so the application makes
+             * no outbound calls to the official server; updates are managed institutionally.
+             * UpgradeVersion remains empty -> IsNewerVersion() is false -> no upgrade prompt,
+             * and the manual check reports "no update available". */
+            UpgradeVersion = String.Empty;
+            UpgradeWebpage = String.Empty;
 
-            try {
-                string resp = await hc.GetStringAsync ("http://server.infirmary-integrated.com/version.php");
-
-                using (StringReader sr = new (resp)) {
-                    UpgradeVersion = (await sr.ReadLineAsync ())?.Trim () ?? "0.0";
-                    UpgradeWebpage = (await sr.ReadLineAsync ())?.Trim () ?? "";
-                }
-
-                hc.Dispose ();
-            } catch {
-                hc.Dispose ();
-            }
+            return Task.CompletedTask;
         }
 
         public async Task<(ServerResponse, Scenario.Step?)> Get_StepMirror (Mirror m) {
