@@ -1,0 +1,184 @@
+<UserControl
+	x:Class="IICMD.RoomCard"
+	xmlns="https://github.com/avaloniaui"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	Width="520"
+	mc:Ignorable="d">
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.vitalLabel">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="Gray" />
+      <Setter Property="VerticalAlignment" Value="Bottom" />
+      <Setter Property="Margin" Value="8,2,4,2" />
+    </Style>
+
+    <Style Selector="TextBlock.vitalValue">
+      <Setter Property="FontSize" Value="26" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="4,0" />
+    </Style>
+
+    <Style Selector="Button.progression">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Margin" Value="0,2" />
+      <Setter Property="Padding" Value="8,4" />
+    </Style>
+  </UserControl.Styles>
+
+  <Border
+			Margin="6"
+			Padding="8"
+			BorderThickness="2"
+			BorderBrush="Gray"
+			CornerRadius="8"
+			Background="White"
+			Name="brdCard">
+
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- Header: room name, scenario name, remove -->
+      <Grid Grid.Row="0" Margin="0,0,0,6">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <TextBox
+						Name="tbRoomName"
+						Grid.Column="0"
+						MinWidth="110"
+						FontWeight="Bold"
+						FontSize="16" />
+
+        <TextBlock
+						Name="txtScenarioName"
+						Grid.Column="1"
+						Margin="10,0"
+						VerticalAlignment="Center"
+						TextTrimming="CharacterEllipsis"
+						Foreground="DimGray" />
+
+        <Button
+						Name="btnRemove"
+						Grid.Column="2"
+						Content="✕"
+						Click="OnClick_Remove" />
+      </Grid>
+
+      <!-- Body: vitals on the left, progression controls on the right -->
+      <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left half: vitals -->
+        <Grid Grid.Column="0" Margin="0,0,8,0">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <TextBlock Grid.Row="0" Grid.Column="0" Classes="vitalLabel" Text="HR" />
+          <TextBlock Grid.Row="0" Grid.Column="1" Classes="vitalValue" Name="lblHR" Foreground="Green" Text="--" />
+
+          <TextBlock Grid.Row="1" Grid.Column="0" Classes="vitalLabel" Text="BP" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Classes="vitalValue" Name="lblBP" Foreground="Firebrick" Text="--/--" />
+
+          <TextBlock Grid.Row="2" Grid.Column="0" Classes="vitalLabel" Text="SpO2" />
+          <TextBlock Grid.Row="2" Grid.Column="1" Classes="vitalValue" Name="lblSPO2" Foreground="DodgerBlue" Text="--" />
+
+          <TextBlock Grid.Row="3" Grid.Column="0" Classes="vitalLabel" Text="RR" />
+          <TextBlock Grid.Row="3" Grid.Column="1" Classes="vitalValue" Name="lblRR" Foreground="DarkGoldenrod" Text="--" />
+
+          <TextBlock Grid.Row="4" Grid.Column="0" Classes="vitalLabel" Text="EtCO2" />
+          <TextBlock Grid.Row="4" Grid.Column="1" Classes="vitalValue" Name="lblETCO2" Foreground="DarkGray" Text="--" />
+
+          <TextBlock Grid.Row="5" Grid.Column="0" Classes="vitalLabel" Text="T °C" />
+          <TextBlock Grid.Row="5" Grid.Column="1" Classes="vitalValue" Name="lblT" Foreground="DarkGray" Text="--" />
+        </Grid>
+
+        <!-- Right half: current step + branches -->
+        <Grid Grid.Column="1">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <TextBlock
+							Name="txtStepName"
+							Grid.Row="0"
+							FontWeight="Bold"
+							TextWrapping="Wrap"
+							Text="No scenario loaded" />
+
+          <TextBlock
+							Name="txtStepTimer"
+							Grid.Row="1"
+							FontSize="12"
+							Foreground="DimGray"
+							Margin="0,2,0,4" />
+
+          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel Name="stackProgressions" />
+          </ScrollViewer>
+
+          <StackPanel
+							Grid.Row="3"
+							Orientation="Horizontal"
+							HorizontalAlignment="Right"
+							Margin="0,4,0,0"
+							Spacing="4">
+            <Button Name="btnPreviousStep" Content="◀ Prev" Click="OnClick_PreviousStep" />
+            <Button Name="btnNextStep" Content="Next ▶" Click="OnClick_NextStep" />
+            <Button Name="btnPauseStep" Content="⏸" Click="OnClick_PauseStep" />
+            <Button Name="btnPlayStep" Content="⏵" Click="OnClick_PlayStep" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+
+      <!-- Footer: broadcast status + credentials -->
+      <Grid Grid.Row="2" Margin="0,8,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Button
+						Name="btnBroadcast"
+						Grid.Column="0"
+						Content="Broadcast"
+						Click="OnClick_Broadcast" />
+
+        <TextBlock
+						Name="txtBroadcastStatus"
+						Grid.Column="1"
+						Margin="10,0,0,0"
+						VerticalAlignment="Center"
+						FontSize="12"
+						Text="Off air" />
+      </Grid>
+    </Grid>
+  </Border>
+</UserControl>

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <StartupObject>IICMD.Program</StartupObject>
+    <SignAssembly>False</SignAssembly>
+    <AssemblyName>infirmary-integrated-command</AssemblyName>
+    <Version>0.1.0</Version>
+    <Company>Infirmary Integrated</Company>
+    <Description>Multi-session instructor dashboard for Infirmary Integrated: hosts and controls concurrent mirror-broadcast simulation sessions from one screen.</Description>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <RootNamespace>IICMD</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Windows\WindowMain.axaml.cs">
+      <DependentUpon>WindowMain.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\RoomCard.axaml.cs">
+      <DependentUpon>RoomCard.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <Import Project="..\II Library\II Library.projitems" Label="Shared" />
+</Project>
