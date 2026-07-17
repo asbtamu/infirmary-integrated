@@ -101,11 +101,7 @@ namespace IISIM {
 
             Dispatcher.UIThread.InvokeAsync (async () => {
                 /* Init important but non-essential functions */
-                if (Instance.Start_Args?.Length > 0) {
-                    string loadfile = Instance.Start_Args [0].Trim (' ', '\n', '\r');
-                    if (!String.IsNullOrEmpty (loadfile))
-                        await LoadOpen (loadfile);
-                }
+                await ProcessStartArguments ();
 
                 /* Update UI from loading functionality */
                 await SetParameterStatus (Instance?.Settings.AutoApplyChanges ?? false);
@@ -118,6 +114,116 @@ namespace IISIM {
                 await InitUpgrade ();
             });
 
+        }
+
+        /* Institutional deployment: command-line options.
+         *   IISIM [file.ii]                                  original behavior; loads a simulation file
+         *   IISIM --receive --accession KEY [--password PW] [--server ADDRESS]
+         *                                                    auto-joins a mirror session as client
+         */
+
+        private async Task ProcessStartArguments () {
+            if (Instance?.Start_Args is null || Instance.Start_Args.Length == 0)
+                return;
+
+            bool optReceive = false;
+            string? optAccession = null, optPassword = null, optServer = null, loadfile = null;
+
+            for (int i = 0; i < Instance.Start_Args.Length; i++) {
+                string arg = Instance.Start_Args [i].Trim (' ', '\n', '\r');
+
+                switch (arg.ToLowerInvariant ()) {
+                    case "--receive":
+                        optReceive = true;
+                        break;
+
+                    case "--accession":
+                        if (i + 1 < Instance.Start_Args.Length)
+                            optAccession = Instance.Start_Args [++i].Trim ();
+                        break;
+
+                    case "--password":
+                        if (i + 1 < Instance.Start_Args.Length)
+                            optPassword = Instance.Start_Args [++i].Trim ();
+                        break;
+
+                    case "--server":
+                        if (i + 1 < Instance.Start_Args.Length)
+                            optServer = Instance.Start_Args [++i].Trim ();
+                        break;
+
+                    default:
+                        if (!arg.StartsWith ("--") && loadfile is null)
+                            loadfile = arg;
+                        break;
+                }
+            }
+
+            if (optReceive)
+                await MirrorReceiveArguments (optAccession, optPassword, optServer);
+            else if (!String.IsNullOrEmpty (loadfile))
+                await LoadOpen (loadfile);
+        }
+
+        private async Task MirrorReceiveArguments (string? accession, string? password, string? server) {
+            if (Instance is null) {
+                Debug.WriteLine ($"Null return at {this.Name}.{nameof (MirrorReceiveArguments)}");
+                return;
+            }
+
+            Regex regex = new ("^[a-zA-Z0-9]*$");
+            if (String.IsNullOrEmpty (accession) || !regex.IsMatch (accession)) {
+                await MessageMirrorError ("MIRROR:SettingsInvalid", "MIRROR:ReceiveTitle");
+                return;
+            }
+
+            Instance.Mirror.Status = Mirror.Statuses.CLIENT;
+            if (!String.IsNullOrEmpty (server))
+                Instance.Mirror.ServerAddress = server;
+            Instance.Mirror.Accession = accession;
+            Instance.Mirror.PasswordAccess = password ?? "";
+
+            /* Attempt to connect with the server to validate connection and credentials; present error if problem.
+             * Mirrors the logic of DialogMirrorReceive.SetMirrorReceive() */
+            Scenario.Step test = new (Instance.Timer_Simulation);
+            Server.ServerResponse resp = await Instance.Mirror.GetStep (test, Instance.Server);
+
+            switch (resp) {
+                default:
+                    break;
+
+                case Server.ServerResponse.ErrorCredentials:
+                    Instance.Mirror.Status = Mirror.Statuses.INACTIVE;
+                    await MessageMirrorError ("MIRROR:ErrorServerEmptyResponse", "MIRROR:Error");
+                    break;
+
+                case Server.ServerResponse.ErrorNameResolution:
+                    Instance.Mirror.Status = Mirror.Statuses.INACTIVE;
+                    await MessageMirrorError ("MIRROR:ErrorServerInaccessible", "MIRROR:Error");
+                    break;
+            }
+        }
+
+        private async Task MessageMirrorError (string message, string title) {
+            if (Instance is null) {
+                Debug.WriteLine ($"Null return at {this.Name}.{nameof (MessageMirrorError)}");
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync (async () => {
+                DialogMessage dlg = new (Instance) {
+                    Message = Instance.Language.Localize (message),
+                    Title = Instance.Language.Localize (title),
+                    Indicator = DialogMessage.Indicators.Error,
+                    Option = DialogMessage.Options.OK,
+                };
+                dlg.Activate ();
+
+                if (!this.IsVisible)                    // Avalonia's parent must be visible to attach a window
+                    this.Show ();
+
+                await dlg.AsyncShow (this);
+            });
         }
 
         private void InitInitialRun () {
