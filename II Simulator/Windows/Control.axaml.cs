@@ -120,13 +120,15 @@ namespace IISIM {
          *   IISIM [file.ii]                                  original behavior; loads a simulation file
          *   IISIM --receive --accession KEY [--password PW] [--server ADDRESS]
          *                                                    auto-joins a mirror session as client
+         *   IISIM --monitor [--fullscreen]                   opens the patient monitor on launch,
+         *                                                    optionally fullscreened (for student-room displays)
          */
 
         private async Task ProcessStartArguments () {
             if (Instance?.Start_Args is null || Instance.Start_Args.Length == 0)
                 return;
 
-            bool optReceive = false;
+            bool optReceive = false, optMonitor = false, optFullscreen = false;
             string? optAccession = null, optPassword = null, optServer = null, loadfile = null;
 
             for (int i = 0; i < Instance.Start_Args.Length; i++) {
@@ -135,6 +137,14 @@ namespace IISIM {
                 switch (arg.ToLowerInvariant ()) {
                     case "--receive":
                         optReceive = true;
+                        break;
+
+                    case "--monitor":
+                        optMonitor = true;
+                        break;
+
+                    case "--fullscreen":
+                        optFullscreen = true;
                         break;
 
                     case "--accession":
@@ -163,6 +173,13 @@ namespace IISIM {
                 await MirrorReceiveArguments (optAccession, optPassword, optServer);
             else if (!String.IsNullOrEmpty (loadfile))
                 await LoadOpen (loadfile);
+
+            if (optMonitor) {
+                await InitDeviceMonitor ();
+
+                if (optFullscreen && Instance.Device_Monitor is not null)
+                    Instance.Device_Monitor.WindowState = WindowState.FullScreen;
+            }
         }
 
         private async Task MirrorReceiveArguments (string? accession, string? password, string? server) {
