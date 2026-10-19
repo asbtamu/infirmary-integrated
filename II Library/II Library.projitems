@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -16,6 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Classes\Allergy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\Alarm.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\Audio.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Classes\CrashLog.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\Drawing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\Encryption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\File.cs" />

@@ -12,6 +12,8 @@ namespace IISIM {
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
         public static void Main (string [] args) {
+            II.CrashLog.Install ("II:SIM");                 // Institutional deployment: log unhandled exceptions
+
             BuildAvaloniaApp ()
             .StartWithClassicDesktopLifetime (args);
         }
