@@ -93,13 +93,22 @@ namespace II.Settings {
             if (!System.IO.File.Exists (File.GetConfigPath ()))
                 return;
 
-            StreamReader sr = new (File.GetConfigPath ());
+            using StreamReader sr = new (File.GetConfigPath ());
 
             string? line;
             bool parseBool;
             int parseInt;
 
             while ((line = sr.ReadLine ()) != null) {
+                /* Per line: a bad value (hand edit, newer version, half-written file) must not stop the app starting */
+                try {
+                    LoadLine (line);
+                } catch (Exception ex) {
+                    CrashLog.Write ("Settings.Load", ex, line);
+                }
+            }
+
+            void LoadLine (string line) {
                 if (line.Contains (":")) {
                     string pName = line.Substring (0, line.IndexOf (':')),
                             pValue = line.Substring (line.IndexOf (':') + 1).Trim ();
@@ -176,13 +185,24 @@ namespace II.Settings {
                     }
                 }
             }
-
-            sr.Close ();
-            sr.Dispose ();
         }
 
         public void Save () {
-            StreamWriter sw = new (File.GetConfigPath (), false);
+            /* Write-then-rename: a crash mid-save left an empty config (EULA reset, window positions lost) */
+            string path = File.GetConfigPath ();
+            string tmp = path + ".tmp";
+
+            try {
+                using (StreamWriter sw = new (tmp, false))
+                    SaveTo (sw);
+
+                System.IO.File.Move (tmp, path, true);
+            } catch (Exception ex) {
+                CrashLog.Write ("Settings.Save", ex, path);     // e.g. two instances saving at once; keep the old file
+            }
+        }
+
+        private void SaveTo (StreamWriter sw) {
             sw.WriteLine ($"Language:{Language}");
             sw.WriteLine ($"AcceptedEULA:{AcceptedEULA}");
             sw.WriteLine ($"AudioEnabled:{AudioEnabled}");
@@ -213,9 +233,6 @@ namespace II.Settings {
             
             if (UI.ScenarioEditor != null)
                 sw.WriteLine ($"WindowStates_ScenarioEditor:{UI.ScenarioEditor.Save()}");
-
-            sw.Close ();
-            sw.Dispose ();
         }
     }
 }

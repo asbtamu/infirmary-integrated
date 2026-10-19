@@ -307,23 +307,23 @@ namespace II {
             await (Current?.Physiology?.OnPhysiologyEvent (Physiology.PhysiologyEventTypes.Vitals_Change, null) ?? Task.CompletedTask);
         }
 
-        public async Task PauseStep () => await ProgressTimer.Stop ();
+        /* Pause, not Stop: Stop keeps the wall-clock start, so a step paused 10 s into 60 s and
+         * resumed 100 s later would advance at once instead of 50 s later */
+        public async Task PauseStep () => await ProgressTimer.Pause ();
 
-        public async Task PlayStep () => await ProgressTimer.Start ();
+        public async Task PlayStep () => await ProgressTimer.Unpause ();
 
         public async Task SetTimer () {
             if (Current == null)
                 return;
+
+            await ProgressTimer.Unpause ();         // A new step starts with its timer running
 
             if (Current.ProgressTimer > 0)
                 await ProgressTimer.ResetStart (Current.ProgressTimer * 1000);
             else
                 await ProgressTimer.Stop ();
         }
-
-        public async Task StopTimer () => await ProgressTimer.Stop ();
-
-        public async Task ResumeTimer () => await ProgressTimer.Start ();
 
         public void ProcessTimer (object? sender, EventArgs e)
             => ProgressTimer.Process ();

@@ -15,6 +15,8 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.0" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />
+    <!-- Pinned over Avalonia 11.3.0's transitive 0.21.2: GHSA-xrw6-gwf8-vvr9 (Linux D-Bus only), fixed in 0.21.3 -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.0" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.0" />
   </ItemGroup>

@@ -111,11 +111,15 @@ namespace IISIM {
 
         public void PauseSimulation () {
             if (Settings.State == II.Settings.Instance.States.Running) {
+                /* The step timer measures its own wall-clock time, so pausing only the parent
+                 * timer would let a timed step advance the moment the simulation resumes */
                 Timer_Simulation.Pause ();
+                _ = Scenario?.PauseStep ();
                 Settings.State = II.Settings.Instance.States.Paused;
-                
+
             } else if (Settings.State == II.Settings.Instance.States.Paused) {
                 Timer_Simulation.Unpause ();
+                _ = Scenario?.PlayStep ();
                 Settings.State = II.Settings.Instance.States.Running;
             }
         }

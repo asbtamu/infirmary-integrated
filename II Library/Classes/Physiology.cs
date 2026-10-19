@@ -637,6 +637,7 @@ namespace II {
                     if (line.Contains (':')) {
                         string pName = line.Substring (0, line.IndexOf (':')),
                                 pValue = line.Substring (line.IndexOf (':') + 1).Trim ();
+                        try {               // Per key: one unparseable value skips that key only
                         switch (pName) {
                             default: break;
 
@@ -715,6 +716,9 @@ namespace II {
                             case "IABP_MAP": IABP_MAP = int.Parse (pValue); break;
                             case "IABP_Active": IABP_Active = bool.Parse (pValue); break;
                             case "IABP_Trigger": IABP_Trigger = (IABP_Triggers)Enum.Parse (typeof (IABP_Triggers), pValue); break;
+                        }
+                        } catch (Exception ex) when (ex is FormatException || ex is ArgumentException || ex is OverflowException) {
+                            /* Skip this key (e.g. a rhythm name from a newer version); keep loading the rest */
                         }
                     }
                 }

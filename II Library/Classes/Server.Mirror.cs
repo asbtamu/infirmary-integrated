@@ -4,23 +4,21 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using II.Settings;
 
 namespace II.Server {
     public class Mirror {
-        private bool ThreadLock = false;
+        private int _ThreadLock = 0;
         public Timer? TimerSimulation;
         public Timer TimerUpdate = new ();
 
         public enum Statuses { INACTIVE, HOST, CLIENT };
 
-        private int RefreshSeconds = 5;
         private string _Accession = "";
-        private BackgroundWorker _BackgroundWorker = new ();
 
         public Statuses Status = Statuses.INACTIVE;
 
@@ -30,7 +28,7 @@ namespace II.Server {
             PasswordAccess = "",
             PasswordEdit = "";
 
-        public DateTime PatientUpdated, ServerQueried;
+        public DateTime PatientUpdated;
 
         public string Accession {
             // Can use local CultureInfo for ToUpper()- does not break functionality, works for end user
@@ -42,12 +40,6 @@ namespace II.Server {
         
         public Mirror (Timer? timerSimulation) {
             TimerSimulation = timerSimulation;
-            ResetBackgroundWorker ();
-        }
-
-        private void ResetBackgroundWorker () {
-            _BackgroundWorker = new BackgroundWorker ();
-            _BackgroundWorker.WorkerSupportsCancellation = true;
         }
 
         public void ProcessTimer (object? sender, EventArgs e) {
@@ -59,39 +51,36 @@ namespace II.Server {
             _ = GetStep (step, s);
         }
 
-        public void CancelOperation () {
-            try {
-                _BackgroundWorker.CancelAsync ();
-            } finally {
-                ThreadLock = false;
-                ResetBackgroundWorker ();
-            }
-        }
+        /* Frees the lock so the next tick queries again; an in-flight request still completes */
+        public void CancelOperation ()
+            => Interlocked.Exchange (ref _ThreadLock, 0);
         
         public async Task<Server.ServerResponse> GetStep (Scenario.Step? step, Server s) {
             /* Mirroring not active; neither client or host */
             if (Status != Statuses.CLIENT)
                 return Server.ServerResponse.NA;
 
-            /* Mirroring as client, check server q RefreshSeconds */
-            if (DateTime.Compare (ServerQueried, DateTime.UtcNow.Subtract (new TimeSpan (0, 0, RefreshSeconds))) < 0) {
-                // Using a thread lock to prevent multiple web calls from generating race conditions against each other
-                if (!ThreadLock) {
-                    ThreadLock = true;
-                    (Server.ServerResponse resp, Scenario.Step? pBuffer) = await s.Get_StepMirror (this);
-                    ThreadLock = false;
+            /* Pacing is TimerUpdate's job (q 5 s). A second "ServerQueried older than 5 s" gate used to
+             * sit here, but ServerQueried is stamped after the round trip, so the tick right after
+             * every update failed it and each change took ~10 s to reach a room. */
 
-                    if (pBuffer != null) {
-                        step ??= new (TimerSimulation);
+            // One request at a time; ticks arrive on thread-pool threads, so the check-and-set must be atomic
+            if (Interlocked.Exchange (ref _ThreadLock, 1) == 1)
+                return Server.ServerResponse.NA;
 
-                        await step.Load (pBuffer.Save ());
-                    }
-                    
-                    return resp;
+            try {
+                (Server.ServerResponse resp, Scenario.Step? pBuffer) = await s.Get_StepMirror (this);
+
+                if (pBuffer != null) {
+                    step ??= new (TimerSimulation);
+
+                    await step.Load (pBuffer.Save ());
                 }
-            } 
 
-            return Server.ServerResponse.NA;
+                return resp;
+            } finally {
+                Interlocked.Exchange (ref _ThreadLock, 0);
+            }
         }
 
         public async Task<Server.ServerResponse> PostStep (Scenario.Step? step, Server s) {

@@ -42,6 +42,11 @@ namespace II.Server {
             ErrorNameResolution
         }
         
+        /* One client for the process: a new HttpClient per call leaks sockets (and early returns
+         * skipped Dispose entirely). 10 s, not the 100 s default, so a hung relay fails fast
+         * instead of piling up requests from every 5 s poll/re-post. */
+        private static readonly HttpClient _Http = new () { Timeout = TimeSpan.FromSeconds (10) };
+
         public Server (Timer? timerSimulation) {
             TimerSimulation = timerSimulation;
         }
@@ -63,14 +68,12 @@ namespace II.Server {
         }
 
         public async Task<(ServerResponse, Scenario.Step?)> Get_StepMirror (Mirror m) {
-            HttpClient hc = new ();
-
             try {
                 string requri = FormatForPHP (
                     $"{m.ServerAddress}{(m.ServerAddress.EndsWith ('/') ? String.Empty : '/')}"
                     + $"mirror_get.php?accession={m.Accession}&accesshash={Encryption.HashSHA256 (m.PasswordAccess)}");
                 
-                HttpResponseMessage resp = await hc.GetAsync (requri);
+                HttpResponseMessage resp = await _Http.GetAsync (requri);
 
                 // We want this exception thrown in case of web disconnect- it will finish the task and end the faux ThreadLock
                 resp.EnsureSuccessStatusCode ();
@@ -88,23 +91,18 @@ namespace II.Server {
                 if (DateTime.Compare (serverUpdated, m.PatientUpdated) <= 0)
                     return (ServerResponse.Success, null);
 
-                m.ServerQueried = DateTime.UtcNow;
                 m.PatientUpdated = serverUpdated;
 
                 Scenario.Step s = new (TimerSimulation);
                 await s.Load (Encryption.DecryptAES (step.Replace (' ', '+')));
 
-                hc.Dispose ();
                 return (ServerResponse.Success, s);
             } catch {
-                hc.Dispose ();
                 return (ServerResponse.ErrorNameResolution, null);
             }
         }
 
         public static async Task<ServerResponse> Post_StepMirror (Mirror m, string? pStr, DateTime? pUp) {
-            HttpClient hc = new ();
-
             if (String.IsNullOrEmpty (pStr) || pUp is null) {
                 return ServerResponse.NA;
             }
@@ -116,7 +114,7 @@ namespace II.Server {
                     + $"&key_access={Encryption.HashSHA256 (m.PasswordAccess)}&key_edit={Encryption.HashSHA256 (m.PasswordEdit)}"
                     + $"&patient={Encryption.EncryptAES (pStr)}&updated={Utility.DateTime_ToString (pUp)}");
                 
-                HttpResponseMessage resp = await hc.GetAsync (requri);
+                HttpResponseMessage resp = await _Http.GetAsync (requri);
 
                 resp.EnsureSuccessStatusCode ();
                 string server_code = "";                // Response generated in mirror_post.php by printf()
@@ -124,8 +122,6 @@ namespace II.Server {
                 using (StringReader sr = new(await resp.Content.ReadAsStringAsync ())) {
                     server_code = (await sr.ReadLineAsync ())?.Trim () ?? "";
                 }
-                
-                hc.Dispose ();
 
                 // These response codes are hard-coded into II Server/mirror_post.php
                 if (server_code == "BAD_PASSWORD") {
@@ -136,7 +132,6 @@ namespace II.Server {
                     return ServerResponse.NA;
                 }
             } catch {
-                hc.Dispose ();
                 return ServerResponse.ErrorNameResolution;
             }
         }

@@ -339,3 +339,7 @@ __pycache__/
 
 # OpenCover UI analysis results
 OpenCover/
+
+# SimChart EHR source snapshot: a separate project, kept here for integration scoping only
+simchart-source/
+simchart-source-*.zip

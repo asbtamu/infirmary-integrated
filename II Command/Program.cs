@@ -19,6 +19,11 @@ namespace IICMD {
         public static void Main (string [] args) {
             II.CrashLog.Install ("II:CMD");                 // Institutional deployment: log unhandled exceptions
 
+            /* Save files, config and the relay are parsed and written with the current culture: on a PC
+             * set to e.g. German, "37.5" reads back as 375. Fix the format for every thread, this one included. */
+            System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+
             BuildAvaloniaApp ()
             .StartWithClassicDesktopLifetime (args);
         }

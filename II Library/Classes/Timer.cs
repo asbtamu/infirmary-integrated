@@ -21,7 +21,7 @@ namespace II {
         public ulong Epoch { get => _Epoch; }
 
         // Note: once a Gap is calculated (> 0), the Unpause() state has begun; IsPaused will be false 
-        public bool IsPaused { get => PausedAt is not null && Gap == 0; }
+        public bool IsPaused { get => PausedAt is not null; }
         public bool IsUnpausing { get => PausedAt is null && Gap > 0;}
         public bool IsRunning { get { return Running; } }
 
@@ -105,7 +105,7 @@ namespace II {
         /// <returns></returns>
         public Task Set (int interval) {
             _Interval = interval;
-            LastAt = DateTime.Now;
+            ClearGap ();
 
             return Task.CompletedTask;
         }
@@ -115,9 +115,18 @@ namespace II {
         /// </summary>
         /// <returns></returns>
         public Task Reset () {
-            LastAt = DateTime.Now;
+            ClearGap ();
 
             return Task.CompletedTask;
+        }
+
+        /* Restarts the count from now: a pause before this point no longer applies */
+        private void ClearGap () {
+            LastAt = DateTime.Now;
+            Gap = 0;
+
+            if (PausedAt is not null)
+                PausedAt = LastAt;
         }
 
         /// <summary>
@@ -224,6 +233,23 @@ namespace II {
             if (!IsRunning)
                 return;
 
+            /* System.Timers.Timer raises Elapsed on pool threads and does not wait for the last
+             * handler: with many rooms on one 10 ms timer, a slow pass overlaps the next and the
+             * same Timer would tick twice at once. A tick already in progress wins; skip this one. */
+            if (System.Threading.Interlocked.Exchange (ref _Processing, 1) == 1)
+                return;
+
+            try {
+                ProcessUnguarded ();
+            } finally {
+                System.Threading.Volatile.Write (ref _Processing, 0);
+            }
+        }
+
+        private int _Processing = 0;
+
+        private void ProcessUnguarded () {
+
             // Only run if the timer:
             // 1. is not Paused (Paused is null)
             // or 2. is Unpausing (Gap > 0)
@@ -235,10 +261,10 @@ namespace II {
                     LastAt = DateTime.Now;
                     Tick?.Invoke (this, EventArgs.Empty);
                 
-                } else if (IsUnpausing && (((DateTime.Now - LastAt).TotalSeconds * 1000) + Gap > _Interval)) {
+                } else if (IsUnpausing && ((DateTime.Now - LastAt).TotalSeconds * 1000) - (Gap ?? 0) > _Interval) {
                     // This condition is the unpausing state; Gap is calculated but needs applying, and it is time to
-                    // trigger even with the gap factored in
-                    _Epoch += (ulong)((DateTime.Now - LastAt).TotalSeconds * 1000) - (Gap ?? 0);
+                    // trigger once the paused time is taken *out* of the elapsed time
+                    _Epoch += (ulong)(((DateTime.Now - LastAt).TotalSeconds * 1000) - (Gap ?? 0));
                     Gap = 0;
 
                     LastAt = DateTime.Now;

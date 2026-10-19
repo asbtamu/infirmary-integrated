@@ -209,14 +209,14 @@ namespace IISIM {
                 default:
                     break;
 
+                /* Unattended room PCs (launched from II Command's .bat) must not give up: an empty reply
+                 * is also what the relay sends before the host's first broadcast (it can't tell
+                 * "no row yet" from "wrong password"), and the relay may still be booting. Stay CLIENT
+                 * so the 5 s poll picks the session up when it appears; log for troubleshooting. */
                 case Server.ServerResponse.ErrorCredentials:
-                    Instance.Mirror.Status = Mirror.Statuses.INACTIVE;
-                    await MessageMirrorError ("MIRROR:ErrorServerEmptyResponse", "MIRROR:Error");
-                    break;
-
                 case Server.ServerResponse.ErrorNameResolution:
-                    Instance.Mirror.Status = Mirror.Statuses.INACTIVE;
-                    await MessageMirrorError ("MIRROR:ErrorServerInaccessible", "MIRROR:Error");
+                    CrashLog.Write ("MirrorReceiveArguments", null,
+                        $"Initial mirror check returned {resp} for accession {accession}; will keep polling");
                     break;
             }
         }
