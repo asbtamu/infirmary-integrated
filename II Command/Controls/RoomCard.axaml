@@ -22,6 +22,15 @@
       <Setter Property="Margin" Value="4,0" />
     </Style>
 
+    <Style Selector="TextBox.vitalEdit">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="MinWidth" Value="72" />
+      <Setter Property="Padding" Value="4,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="4,0" />
+    </Style>
+
     <Style Selector="Button.progression">
       <Setter Property="HorizontalAlignment" Value="Stretch" />
       <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -52,6 +61,8 @@
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
         <TextBox
@@ -70,8 +81,22 @@
 						Foreground="DimGray" />
 
         <Button
-						Name="btnRemove"
+						Name="btnScenario"
 						Grid.Column="2"
+						Margin="0,0,4,0"
+						Content="Scenario…"
+						Click="OnClick_Scenario" />
+
+        <Button
+						Name="btnRoom"
+						Grid.Column="3"
+						Margin="0,0,4,0"
+						Content="Room…"
+						Click="OnClick_Room" />
+
+        <Button
+						Name="btnRemove"
+						Grid.Column="4"
 						Content="✕"
 						Click="OnClick_Remove" />
       </Grid>
@@ -92,29 +117,67 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
 
+          <!-- Each value: a TextBlock (double-click to edit, wheel to nudge) over a hidden TextBox editor -->
+
           <TextBlock Grid.Row="0" Grid.Column="0" Classes="vitalLabel" Text="HR" />
-          <TextBlock Grid.Row="0" Grid.Column="1" Classes="vitalValue" Name="lblHR" Foreground="Green" Text="--" />
+          <Panel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left">
+            <TextBlock Classes="vitalValue" Name="lblHR" Foreground="Green" Text="--" />
+            <TextBox Classes="vitalEdit" Name="tbHR" IsVisible="False" />
+          </Panel>
 
           <TextBlock Grid.Row="1" Grid.Column="0" Classes="vitalLabel" Text="BP" />
-          <TextBlock Grid.Row="1" Grid.Column="1" Classes="vitalValue" Name="lblBP" Foreground="Firebrick" Text="--/--" />
+          <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <Panel>
+              <TextBlock Classes="vitalValue" Name="lblNSBP" Foreground="Firebrick" Text="--" />
+              <TextBox Classes="vitalEdit" Name="tbNSBP" IsVisible="False" />
+            </Panel>
+            <TextBlock Classes="vitalValue" Name="lblBPSlash" Foreground="Firebrick" Text="/" Margin="0" />
+            <Panel>
+              <TextBlock Classes="vitalValue" Name="lblNDBP" Foreground="Firebrick" Text="--" />
+              <TextBox Classes="vitalEdit" Name="tbNDBP" IsVisible="False" />
+            </Panel>
+          </StackPanel>
 
           <TextBlock Grid.Row="2" Grid.Column="0" Classes="vitalLabel" Text="SpO2" />
-          <TextBlock Grid.Row="2" Grid.Column="1" Classes="vitalValue" Name="lblSPO2" Foreground="DodgerBlue" Text="--" />
+          <Panel Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left">
+            <TextBlock Classes="vitalValue" Name="lblSPO2" Foreground="DodgerBlue" Text="--" />
+            <TextBox Classes="vitalEdit" Name="tbSPO2" IsVisible="False" />
+          </Panel>
 
           <TextBlock Grid.Row="3" Grid.Column="0" Classes="vitalLabel" Text="RR" />
-          <TextBlock Grid.Row="3" Grid.Column="1" Classes="vitalValue" Name="lblRR" Foreground="DarkGoldenrod" Text="--" />
+          <Panel Grid.Row="3" Grid.Column="1" HorizontalAlignment="Left">
+            <TextBlock Classes="vitalValue" Name="lblRR" Foreground="DarkGoldenrod" Text="--" />
+            <TextBox Classes="vitalEdit" Name="tbRR" IsVisible="False" />
+          </Panel>
 
           <TextBlock Grid.Row="4" Grid.Column="0" Classes="vitalLabel" Text="EtCO2" />
-          <TextBlock Grid.Row="4" Grid.Column="1" Classes="vitalValue" Name="lblETCO2" Foreground="DarkGray" Text="--" />
+          <Panel Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left">
+            <TextBlock Classes="vitalValue" Name="lblETCO2" Foreground="DarkGray" Text="--" />
+            <TextBox Classes="vitalEdit" Name="tbETCO2" IsVisible="False" />
+          </Panel>
 
           <TextBlock Grid.Row="5" Grid.Column="0" Classes="vitalLabel" Text="T °C" />
-          <TextBlock Grid.Row="5" Grid.Column="1" Classes="vitalValue" Name="lblT" Foreground="DarkGray" Text="--" />
+          <Panel Grid.Row="5" Grid.Column="1" HorizontalAlignment="Left">
+            <TextBlock Classes="vitalValue" Name="lblT" Foreground="DarkGray" Text="--" />
+            <TextBox Classes="vitalEdit" Name="tbT" IsVisible="False" />
+          </Panel>
+
+          <Button
+							Name="btnVitals"
+							Grid.Row="6"
+							Grid.Column="0"
+							Grid.ColumnSpan="2"
+							Margin="0,6,0,0"
+							HorizontalAlignment="Left"
+							Content="Edit Vitals…"
+							Click="OnClick_Vitals" />
         </Grid>
 
         <!-- Right half: current step + branches -->

@@ -1,0 +1,55 @@
+<Window
+	x:Class="IICMD.DialogRoom"
+	xmlns="https://github.com/avaloniaui"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	Title="Room Settings"
+	Width="420"
+	SizeToContent="Height"
+	CanResize="False"
+	WindowStartupLocation="CenterOwner"
+	mc:Ignorable="d">
+
+  <Window.Styles>
+    <Style Selector="TextBlock.label">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,0,12,0" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="Margin" Value="0,3" />
+    </Style>
+  </Window.Styles>
+
+  <StackPanel Margin="14" Spacing="6">
+
+    <TextBlock
+			Text="These identify this physical room. Set them once; they are saved in the layout and baked into the room PC's launcher, so the room connects on its own at startup."
+			TextWrapping="Wrap"
+			FontSize="12"
+			Foreground="DimGray"
+			Margin="0,0,0,8" />
+
+    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto">
+
+      <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Room name" />
+      <TextBox Grid.Row="0" Grid.Column="1" Name="tbName" />
+
+      <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="Accession" />
+      <TextBox Grid.Row="1" Grid.Column="1" Name="tbAccession" Watermark="Letters and digits, e.g. SIMROOM01" />
+
+      <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="Access password" />
+      <TextBox Grid.Row="2" Grid.Column="1" Name="tbPasswordAccess" Watermark="What room PCs use to receive" />
+
+      <TextBlock Grid.Row="3" Grid.Column="0" Classes="label" Text="Edit password" />
+      <TextBox Grid.Row="3" Grid.Column="1" Name="tbPasswordEdit" Watermark="Protects the accession from being overwritten" />
+    </Grid>
+
+    <TextBlock Name="txtNote" FontSize="12" Foreground="Firebrick" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" Margin="0,8,0,0">
+      <Button Name="btnCancel" Content="Cancel" Click="OnClick_Cancel" />
+      <Button Name="btnOK" Content="OK" Click="OnClick_OK" />
+    </StackPanel>
+  </StackPanel>
+</Window>

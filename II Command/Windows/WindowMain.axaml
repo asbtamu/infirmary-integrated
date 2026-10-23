@@ -8,6 +8,7 @@
 	Title="Infirmary Integrated: Command"
 	Width="1600"
 	Height="900"
+	WindowState="Maximized"
 	WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 
@@ -24,7 +25,10 @@
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
@@ -50,8 +54,39 @@
 						Content="Save Layout…"
 						Click="OnClick_SaveLayout" />
 
-        <StackPanel
+        <Button
+						Name="btnExportLaunchers"
+						Grid.Column="3"
+						Margin="0,0,6,0"
+						Content="Export Room Launchers…"
+						Click="OnClick_ExportLaunchers" />
+
+        <CheckBox
+						Name="chkScrollVitals"
 						Grid.Column="4"
+						VerticalAlignment="Center"
+						Margin="10,0,0,0"
+						Content="Scroll wheel adjusts vitals"
+						ToolTip.Tip="When on, the mouse wheel over a vital on a card nudges it by 1 (0.1 °C). Off by default so scrolling the dashboard can't change a live room." />
+
+        <TextBlock
+						Name="txtStatus"
+						Grid.Column="5"
+						VerticalAlignment="Center"
+						Margin="14,0"
+						TextTrimming="CharacterEllipsis"
+						Foreground="DimGray" />
+
+        <CheckBox
+						Name="chkCompact"
+						Grid.Column="6"
+						VerticalAlignment="Center"
+						Margin="0,0,14,0"
+						Content="Compact"
+						Click="OnClick_Compact" />
+
+        <StackPanel
+						Grid.Column="7"
 						Orientation="Horizontal"
 						VerticalAlignment="Center"
 						Margin="0,0,10,0">
@@ -66,7 +101,7 @@
 
         <Button
 						Name="btnBroadcastAll"
-						Grid.Column="5"
+						Grid.Column="8"
 						Content="Broadcast All"
 						Click="OnClick_BroadcastAll" />
       </Grid>

@@ -16,6 +16,7 @@ namespace IICMD {
 
     public class LabLayout {
         public string ServerAddress { get; set; } = II.Server.Mirror.DefaultServer;
+        public string? SimulatorPath { get; set; }
         public List<RoomDefinition> Rooms { get; set; } = new ();
 
         public class RoomDefinition {
@@ -28,7 +29,14 @@ namespace IICMD {
 
         public static async Task Save (LabLayout layout, string filepath) {
             string json = JsonSerializer.Serialize (layout, new JsonSerializerOptions () { WriteIndented = true });
-            await File.WriteAllTextAsync (filepath, json);
+            await WriteAtomic (filepath, json);
+        }
+
+        /* Write-then-rename: a crash or full disk mid-write leaves the old file intact, not a truncated one */
+        public static async Task WriteAtomic (string filepath, string contents) {
+            string tmp = filepath + ".tmp";
+            await File.WriteAllTextAsync (tmp, contents);
+            File.Move (tmp, filepath, true);
         }
 
         public static async Task<LabLayout?> Load (string filepath) {
