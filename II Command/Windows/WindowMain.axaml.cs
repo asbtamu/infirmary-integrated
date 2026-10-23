@@ -79,6 +79,8 @@ namespace IICMD {
                     return;
 
                 foreach (RoomCard card in _Cards) {
+                    card.Session?.LogVitalsSample ();
+
                     if (card.Session?.IsBroadcasting ?? false)
                         _ = card.Session.PostCurrentStep ();
                 }
@@ -350,9 +352,9 @@ namespace IICMD {
 
                 sb.AppendLine (" --monitor --fullscreen");
 
-                string name = SanitizeFilename (rs.RoomName);
+                string name = SessionLog.SanitizeFilename (rs.RoomName);
                 for (int i = 2; !used.Add (name); i++)
-                    name = $"{SanitizeFilename (rs.RoomName)}_{i}";
+                    name = $"{SessionLog.SanitizeFilename (rs.RoomName)}_{i}";
 
                 await LabLayout.WriteAtomic (System.IO.Path.Combine (dir, $"{name}.bat"), sb.ToString ());
             }
@@ -365,15 +367,6 @@ namespace IICMD {
                 throw new InvalidOperationException ($"Value contains a double quote, which a launcher can't carry: {value}");
 
             return $"\"{value.Replace ("%", "%%")}\"";
-        }
-
-        private static string SanitizeFilename (string name) {
-            foreach (char c in System.IO.Path.GetInvalidFileNameChars ())
-                name = name.Replace (c, '_');
-
-            name = name.Trim ();
-
-            return String.IsNullOrEmpty (name) ? "Room" : name;
         }
 
         private async void OnClick_BroadcastAll (object? s, RoutedEventArgs e) {

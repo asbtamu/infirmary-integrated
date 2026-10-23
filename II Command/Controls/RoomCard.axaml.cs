@@ -410,6 +410,23 @@ namespace IICMD {
             }
         }
 
+        private void OnClick_Debrief (object? s, RoutedEventArgs e) {
+            try {
+                string? path = Session?.WriteDebrief ();
+
+                if (path is null) {
+                    Owner?.ShowStatus ($"{Session?.RoomName}: no scenario run to report", true);
+                    return;
+                }
+
+                Process.Start (new ProcessStartInfo (path) { UseShellExecute = true });
+                Owner?.ShowStatus ($"Debrief written: {path}");
+            } catch (Exception ex) {
+                CrashLog.Write ("Debrief", ex, Session?.Log?.FilePath);
+                Owner?.ShowStatus ($"Debrief NOT written: {ex.Message}", true);
+            }
+        }
+
         private void OnClick_Vitals (object? s, RoutedEventArgs e) {
             if (Session is null || Owner is null)
                 return;

@@ -65,6 +65,26 @@ room machines (remembered in the layout thereafter) and an output folder, and II
 `<Room name>.bat` per card with that room's accession, password and server baked in. Copy each to
 its room machine's desktop or Startup folder. Re-export after changing rooms or credentials.
 
+## Session logs and debriefs
+
+Every scenario load starts a log for that room, written as it happens to
+`Documents\Infirmary Integrated\Session Logs\<date>\<Room>_<time>.csv`. Each row has wall time,
+seconds since load, the step and vitals at that moment, and one of these events:
+
+- `session_start`, `session_end`
+- `step`: who caused it (`instructor: branch "<label>"`, `instructor: Next`, `instructor: Previous`, or `step timer`)
+- `vitals_override`: what changed, e.g. `HR 80→120; SpO2 98→88`
+- `step_timer_pause`, `step_timer_resume`, `broadcast_start`, `broadcast_stop`
+- `vitals`: a sample every 5 s
+
+**Debrief** on a card writes `<same name>.html` next to the CSV and opens it. The page shows the
+path taken, the authored steps that were never reached, a vitals chart with step changes marked,
+and every event. The log records instructor choices and step timers, not what learners did, so
+label branches as the observed action ("Gave nitroglycerin -- correct"), not the destination.
+
+Logs name rooms, never students. Once you pair a log with a roster it is a FERPA education
+record: keep it in an approved system (e.g. Canvas), not a shared folder or the relay server.
+
 ## Notes
 
 - The dashboard renders numerics only; receiving II:SIM clients draw their own waveforms from the broadcast physiology.

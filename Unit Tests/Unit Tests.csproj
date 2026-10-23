@@ -25,5 +25,10 @@
     <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Plain C# (no UI), so II Command's session log is tested directly -->
+    <Compile Include="..\II Command\Classes\SessionLog.cs" Link="Linked\SessionLog.cs" />
+  </ItemGroup>
+
   <Import Project="..\II Library\II Library.projitems" Label="Shared" />
 </Project>

@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -48,6 +49,12 @@ namespace IICMD {
          * that row and gives up (with an error dialog) if it is missing. With the placeholder
          * the monitor connects and shows a calm default patient until the scenario arrives. */
         private Physiology? _IdlePhysiology;
+
+        /* Record of the current scenario run (see SessionLog); null while no scenario is loaded */
+        public SessionLog? Log { get; private set; }
+
+        /* Set by instructor step actions so OnStepChanged can tell them from a step timer firing */
+        private string? _NextStepCause;
 
         public RoomSession (System.Timers.Timer timerMain) {
             _TimerMain = timerMain;
@@ -134,10 +141,17 @@ namespace IICMD {
             await Scenario.SetTimer ();
             await (Scenario.Physiology?.Activate () ?? Task.CompletedTask);
 
+            Log = new SessionLog (RoomName,
+                !String.IsNullOrEmpty (Scenario.Name) ? Scenario.Name : Path.GetFileNameWithoutExtension (filepath));
+            Log.Add ("session_start", StepName (Scenario.Current), $"Loaded {Path.GetFileName (filepath)}", CurrentVitals ());
+
             return true;
         }
 
         private void UnloadScenario () {
+            Log?.Add ("session_end", StepName (Scenario?.Current), null, CurrentVitals ());
+            Log = null;
+
             if (Scenario is not null) {
                 if (Scenario.Physiology is not null)
                     Timer_Simulation.Tick -= Scenario.Physiology.ProcessTimers;
@@ -163,6 +177,9 @@ namespace IICMD {
             HookPhysiology ();
             _ = PostCurrentStep ();
 
+            Log?.Add ("step", StepName (Scenario?.Current), _NextStepCause ?? "step timer", CurrentVitals ());
+            _NextStepCause = null;
+
             StepChanged?.Invoke (this, EventArgs.Empty);
         }
 
@@ -180,6 +197,8 @@ namespace IICMD {
             /* NA = the relay answered with something unexpected (e.g. an HTML error page): nothing was stored */
             if (resp != Server.ServerResponse.Success)
                 Mirror.Status = Mirror.Statuses.INACTIVE;
+            else
+                Log?.Add ("broadcast_start", StepName (Scenario?.Current), Mirror.Accession);
 
             return resp;
         }
@@ -207,6 +226,7 @@ namespace IICMD {
                     Server);
             } catch { } finally {
                 Mirror.Status = Mirror.Statuses.INACTIVE;
+                Log?.Add ("broadcast_stop", StepName (Scenario?.Current));
                 _PostLock.Release ();
             }
         }
@@ -326,17 +346,54 @@ namespace IICMD {
             if (String.IsNullOrEmpty (destination))
                 return;
 
-            await Scenario.NextStep (destination);
+            string? label = (progression ?? Scenario.Current?.DefaultProgression)?.Description;
+            _NextStepCause = $"instructor: {(progression is null ? "Next" : "branch")}"
+                + (String.IsNullOrEmpty (label) ? "" : $" \"{label}\"");
+
+            try {
+                await Scenario.NextStep (destination);
+            } finally {
+                _NextStepCause = null;
+            }
         }
 
-        public async Task PreviousStep ()
-            => await (Scenario?.LastStep () ?? Task.CompletedTask);
+        public async Task PreviousStep () {
+            if (Scenario is null)
+                return;
 
-        public async Task PauseStepTimer ()
-            => await (Scenario?.PauseStep () ?? Task.CompletedTask);
+            _NextStepCause = "instructor: Previous";
 
-        public async Task PlayStepTimer ()
-            => await (Scenario?.PlayStep () ?? Task.CompletedTask);
+            try {
+                await Scenario.LastStep ();
+            } finally {
+                _NextStepCause = null;
+            }
+        }
+
+        public async Task PauseStepTimer () {
+            Log?.Add ("step_timer_pause", StepName (Scenario?.Current));
+            await (Scenario?.PauseStep () ?? Task.CompletedTask);
+        }
+
+        public async Task PlayStepTimer () {
+            Log?.Add ("step_timer_resume", StepName (Scenario?.Current));
+            await (Scenario?.PlayStep () ?? Task.CompletedTask);
+        }
+
+        /* Called every few seconds by the dashboard so the debrief has a vitals trace */
+        public void LogVitalsSample () => Log?.Add ("vitals", StepName (Scenario?.Current), null, CurrentVitals ());
+
+        private SessionLog.Vitals? CurrentVitals () {
+            Physiology? p = Physiology;
+            return p is null ? null : new (p.HR, p.NSBP, p.NDBP, p.SPO2, p.RR, p.ETCO2, p.T);
+        }
+
+        private static string StepName (Scenario.Step? step)
+            => step is null ? "" : !String.IsNullOrEmpty (step.Name) ? step.Name : "(unnamed step)";
+
+        /* Debrief for the current run; null when no scenario is loaded */
+        public string? WriteDebrief ()
+            => Log?.WriteReport (Scenario?.Steps.Select (StepName) ?? Enumerable.Empty<string> ());
 
         /* Manual vitals: instructor overrides for the room's *current* step.
          *
@@ -354,6 +411,17 @@ namespace IICMD {
 
             if (p is null)
                 return;
+
+            Physiology.Vital_Signs was = p.VS_Settings;
+            List<string> changes = new ();
+            void Diff (string name, double before, double after) {
+                if (before != after)
+                    changes.Add ($"{name} {before:0.#}→{after:0.#}");
+            }
+            if (p.Cardiac_Rhythm.Value != rhythm)
+                changes.Add ($"Rhythm {Utility.UnderscoreToSpace (p.Cardiac_Rhythm.Value.ToString ())}→{Utility.UnderscoreToSpace (rhythm.ToString ())}");
+            Diff ("HR", was.HR, hr); Diff ("SBP", was.NSBP, nsbp); Diff ("DBP", was.NDBP, ndbp);
+            Diff ("SpO2", was.SPO2, spo2); Diff ("RR", was.RR, rr); Diff ("EtCO2", was.ETCO2, etco2); Diff ("T", was.T, t);
 
             await p.UpdateParameters_Cardiac (
                 hr,
@@ -381,6 +449,10 @@ namespace IICMD {
                 etco2,
                 p.Mechanically_Ventilated,
                 p.VS_Settings.RR_IE_I, p.VS_Settings.RR_IE_E);
+
+            if (changes.Count > 0)
+                Log?.Add ("vitals_override", StepName (Scenario?.Current), String.Join ("; ", changes),
+                    new SessionLog.Vitals (hr, nsbp, ndbp, spo2, rr, etco2, t));
 
             _ = PostCurrentStep ();                 // Push immediately rather than waiting for the 5 s re-post
         }

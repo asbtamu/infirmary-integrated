@@ -169,15 +169,20 @@
             <TextBox Classes="vitalEdit" Name="tbT" IsVisible="False" />
           </Panel>
 
-          <Button
-							Name="btnVitals"
+          <StackPanel
 							Grid.Row="6"
 							Grid.Column="0"
 							Grid.ColumnSpan="2"
-							Margin="0,6,0,0"
-							HorizontalAlignment="Left"
-							Content="Edit Vitals…"
-							Click="OnClick_Vitals" />
+							Orientation="Horizontal"
+							Spacing="4"
+							Margin="0,6,0,0">
+            <Button Name="btnVitals" Content="Edit Vitals…" Click="OnClick_Vitals" />
+            <Button
+								Name="btnDebrief"
+								Content="Debrief"
+								ToolTip.Tip="Open a debrief report of this room's current scenario run (path taken, vitals, events)"
+								Click="OnClick_Debrief" />
+          </StackPanel>
         </Grid>
 
         <!-- Right half: current step + branches -->
