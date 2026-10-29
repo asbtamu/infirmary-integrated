@@ -6,7 +6,7 @@
     <StartupObject>IICMD.Program</StartupObject>
     <SignAssembly>False</SignAssembly>
     <AssemblyName>infirmary-integrated-command</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Company>Infirmary Integrated</Company>
     <Description>Multi-session instructor dashboard for Infirmary Integrated: hosts and controls concurrent mirror-broadcast simulation sessions from one screen.</Description>
     <PlatformTarget>AnyCPU</PlatformTarget>

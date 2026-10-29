@@ -345,9 +345,17 @@ namespace IICMD {
                 Button btn = this.GetControl<Button> ("btnBroadcast");
 
                 if (Session?.IsBroadcasting ?? false) {
-                    txt.Text = $"● LIVE — Accession: {Session.Mirror.Accession}  Password: {Session.Mirror.PasswordAccess}";
-                    txt.Foreground = Brushes.Green;
-                    brd.BorderBrush = Brushes.Green;
+                    /* Reception is only known on the institutional relay; elsewhere this stays plain "LIVE" */
+                    var (supported, age) = Session.Reception;
+                    string rx = !supported ? ""
+                        : age is null ? " · ⚠ no room PC yet"
+                        : age <= RoomSession.ReceivingWithinSeconds ? " · receiving"
+                        : $" · ⚠ room PC silent {age} s";
+                    bool warn = rx.Contains ('⚠');
+
+                    txt.Text = $"● LIVE{rx} — Accession: {Session.Mirror.Accession}  Password: {Session.Mirror.PasswordAccess}";
+                    txt.Foreground = warn ? Brushes.DarkOrange : Brushes.Green;
+                    brd.BorderBrush = warn ? Brushes.DarkOrange : Brushes.Green;
                     btn.Content = "Stop";
                 } else {
                     txt.Text = $"Off air — Accession: {Session?.Mirror.Accession}  Password: {Session?.Mirror.PasswordAccess}";

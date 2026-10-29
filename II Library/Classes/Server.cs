@@ -102,6 +102,25 @@ namespace II.Server {
             }
         }
 
+        /* Institutional relay only (II Server/mirror_relay.py): how long since a receiving client last read
+         * this accession. Supported is false on a relay without the endpoint (upstream PHP: 404) or when
+         * unreachable; Age is null when no client has read it yet. Authenticated with the edit password. */
+        public static async Task<(bool Supported, int? Age)> Get_MirrorReadAge (Mirror m) {
+            try {
+                string requri = FormatForPHP (
+                    $"{m.ServerAddress}{(m.ServerAddress.EndsWith ('/') ? String.Empty : '/')}"
+                    + $"mirror_status.php?accession={m.Accession}&key_edit={Encryption.HashSHA256 (m.PasswordEdit)}");
+
+                HttpResponseMessage resp = await _Http.GetAsync (requri);
+                if (!resp.IsSuccessStatusCode)
+                    return (false, null);
+
+                return (true, int.TryParse ((await resp.Content.ReadAsStringAsync ()).Trim (), out int age) ? age : null);
+            } catch {
+                return (false, null);
+            }
+        }
+
         public static async Task<ServerResponse> Post_StepMirror (Mirror m, string? pStr, DateTime? pUp) {
             if (String.IsNullOrEmpty (pStr) || pUp is null) {
                 return ServerResponse.NA;

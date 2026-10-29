@@ -81,8 +81,10 @@ namespace IICMD {
                 foreach (RoomCard card in _Cards) {
                     card.Session?.LogVitalsSample ();
 
-                    if (card.Session?.IsBroadcasting ?? false)
+                    if (card.Session?.IsBroadcasting ?? false) {
                         _ = card.Session.PostCurrentStep ();
+                        _ = RefreshReception (card);
+                    }
                 }
             };
             _UITimer.Start ();
@@ -398,6 +400,14 @@ namespace IICMD {
         private async void OnClick_BroadcastAll (object? s, RoutedEventArgs e) {
             foreach (RoomCard card in _Cards.ToList ())
                 await Broadcast (card);
+        }
+
+        private static async Task RefreshReception (RoomCard card) {
+            if (card.Session is null)
+                return;
+
+            await card.Session.CheckReception ();
+            card.RefreshBroadcastStatus ();
         }
 
         private async Task Broadcast (RoomCard card) {

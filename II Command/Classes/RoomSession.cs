@@ -389,6 +389,22 @@ namespace IICMD {
             await Scenario.PlayStep ();
         }
 
+        /* Is a room PC actually reading this room? From the relay's last-read time (mirror_relay.py only).
+         * Room PCs poll every 5 s, so three missed polls means the room monitor has stopped following. */
+        public const int ReceivingWithinSeconds = 15;
+
+        public (bool Supported, int? Age) Reception { get; private set; }
+
+        public async Task CheckReception () {
+            bool was = Reception.Age <= ReceivingWithinSeconds;
+            Reception = IsBroadcasting ? await Server.Get_MirrorReadAge (Mirror) : (false, null);
+            bool now = Reception.Age <= ReceivingWithinSeconds;
+
+            /* Into the session log too: a monitor that dropped out mid-scenario matters in a debrief */
+            if (Reception.Supported && now != was)
+                Log?.Add (now ? "receiver_connected" : "receiver_lost", StepName (Scenario?.Current));
+        }
+
         /* Called every few seconds by the dashboard so the debrief has a vitals trace */
         public void LogVitalsSample () => Log?.Add ("vitals", StepName (Scenario?.Current), null, CurrentVitals ());
 
