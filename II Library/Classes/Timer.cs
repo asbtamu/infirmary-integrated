@@ -11,11 +11,15 @@ namespace II {
         private int _Interval = 0;
         private bool _Locked = false;
 
-        private DateTime LastAt;
+        /* Milliseconds on Environment.TickCount64, not DateTime.Now: wall-clock time jumps back an hour
+         * when daylight saving ends, which stalled every simulation timer for that hour */
+        private static long Now => Environment.TickCount64;
+
+        private long LastAt;
         private bool Running = false;
 
         /* For Epoch timekeeping (for simulation purposes e.g. pausing) */
-        private DateTime? PausedAt;
+        private long? PausedAt;
         private ulong? Gap = 0;
         private ulong _Epoch = 0;
         public ulong Epoch { get => _Epoch; }
@@ -44,8 +48,8 @@ namespace II {
 
         public bool IsLocked { get => _Locked; }
         public int Interval { get => _Interval; }
-        public int Elapsed { get => (int)((DateTime.Now - LastAt).TotalSeconds * 1000); }
-        public int Remainder { get => _Interval - (int)((DateTime.Now - LastAt).TotalSeconds * 1000); }
+        public int Elapsed { get => (int)System.Math.Min (Now - LastAt, int.MaxValue); }     // Unreset timer on a PC up > 24 days
+        public int Remainder { get => _Interval - Elapsed; }
 
         public void Lock () => _Locked = true;
 
@@ -122,7 +126,7 @@ namespace II {
 
         /* Restarts the count from now: a pause before this point no longer applies */
         private void ClearGap () {
-            LastAt = DateTime.Now;
+            LastAt = Now;
             Gap = 0;
 
             if (PausedAt is not null)
@@ -196,7 +200,7 @@ namespace II {
         /// </summary>
         /// <returns></returns>
         public Task Pause () {
-            PausedAt ??= DateTime.Now;        // Don't wipe Paused if Pause() is called multiple times!
+            PausedAt ??= Now;        // Don't wipe Paused if Pause() is called multiple times!
             return Task.CompletedTask;
         }
         
@@ -209,7 +213,7 @@ namespace II {
             // twice simultaneously... only looking at PausedAt allows a smooth flow continuation
             if (PausedAt is not null) {
                 Gap ??= 0;
-                Gap += (ulong)(((DateTime.Now - PausedAt)?.TotalSeconds * 1000) ?? 0);
+                Gap += (ulong)(Now - PausedAt.Value);
                 PausedAt = null;
             }
 
@@ -254,20 +258,22 @@ namespace II {
             // 1. is not Paused (Paused is null)
             // or 2. is Unpausing (Gap > 0)
             if (!IsPaused) {
-                if (!IsUnpausing && (DateTime.Now - LastAt).TotalSeconds * 1000 > _Interval) {
+                long now = Now, elapsed = now - LastAt;
+
+                if (!IsUnpausing && elapsed > _Interval) {
                     // This condition is the base "Running" state
-                    _Epoch += (ulong)((DateTime.Now - LastAt).TotalSeconds * 1000);
+                    _Epoch += (ulong)elapsed;
                     
-                    LastAt = DateTime.Now;
+                    LastAt = now;
                     Tick?.Invoke (this, EventArgs.Empty);
                 
-                } else if (IsUnpausing && ((DateTime.Now - LastAt).TotalSeconds * 1000) - (Gap ?? 0) > _Interval) {
+                } else if (IsUnpausing && elapsed - (long)(Gap ?? 0) > _Interval) {
                     // This condition is the unpausing state; Gap is calculated but needs applying, and it is time to
                     // trigger once the paused time is taken *out* of the elapsed time
-                    _Epoch += (ulong)(((DateTime.Now - LastAt).TotalSeconds * 1000) - (Gap ?? 0));
+                    _Epoch += (ulong)(elapsed - (long)(Gap ?? 0));
                     Gap = 0;
 
-                    LastAt = DateTime.Now;
+                    LastAt = now;
                     Tick?.Invoke (this, EventArgs.Empty);
                 }
             }

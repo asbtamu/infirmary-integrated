@@ -24,6 +24,9 @@ namespace II.Settings {
             Window w = new();
             string [] split = raw.Split (",");
 
+            if (split.Length < 5)                   // A short or hand-edited line falls back to defaults, not a startup crash
+                return w;
+
             if (int.TryParse (split [0], out int x))
                 w.X = x;
             if (int.TryParse (split [1], out int y))

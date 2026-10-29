@@ -631,7 +631,7 @@ namespace II {
 
             try {
                 string? line;
-                while (!String.IsNullOrEmpty (line = sRead.ReadLine ())) {
+                while ((line = sRead.ReadLine ()) != null) {      // Not IsNullOrEmpty: a blank line must not end the load
                     line = line.Trim ();
 
                     if (line.Contains (':')) {

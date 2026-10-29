@@ -106,7 +106,7 @@ namespace II {
             this.Reset ();
 
             try {
-                while (!String.IsNullOrEmpty (line = sRead.ReadLine ())) {
+                while ((line = sRead.ReadLine ()) != null) {      // Not IsNullOrEmpty: a blank line must not end the load
                     line = line.Trim ();
                     if (line == "> Begin: Step") {
                         pbuffer = new StringBuilder ();
@@ -357,7 +357,7 @@ namespace II {
                 StringBuilder pbuffer;
 
                 try {
-                    while (!String.IsNullOrEmpty (line = await sRead.ReadLineAsync ())) {
+                    while ((line = await sRead.ReadLineAsync ()) != null) {      // Not IsNullOrEmpty: a blank line must not end the load
                         line = line.Trim ();
                         if (line == "> Begin: Physiology") {
                             pbuffer = new ();
@@ -452,7 +452,7 @@ namespace II {
                     string? line;
 
                     try {
-                        while (!String.IsNullOrEmpty (line = await sRead.ReadLineAsync ())) {
+                        while ((line = await sRead.ReadLineAsync ()) != null) {      // Not IsNullOrEmpty: a blank line must not end the load
                             line = line.Trim ();
 
                             if (line.Contains (":")) {
