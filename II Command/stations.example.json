@@ -1,0 +1,111 @@
+{
+ "campus": "HOU 3rd floor",
+ "server": "http://server.infirmary-integrated.com/",
+ "rows": 5,
+ "cols": 7,
+ "cells": [
+  [
+   0,
+   0,
+   1,
+   1,
+   "3rd"
+  ],
+  [
+   1,
+   0,
+   2,
+   2,
+   "305"
+  ],
+  [
+   1,
+   2,
+   1,
+   1,
+   "305a"
+  ],
+  [
+   1,
+   3,
+   1,
+   1,
+   "SIM1"
+  ],
+  [
+   1,
+   4,
+   1,
+   1,
+   "SIM2"
+  ],
+  [
+   1,
+   5,
+   1,
+   1,
+   "SIM3"
+  ],
+  [
+   1,
+   6,
+   1,
+   1,
+   "SIM4"
+  ],
+  [
+   2,
+   2,
+   1,
+   5,
+   "Sim Hallway"
+  ],
+  [
+   3,
+   0,
+   2,
+   2,
+   "304"
+  ],
+  [
+   3,
+   3,
+   1,
+   1,
+   "CONTROL"
+  ],
+  [
+   4,
+   2,
+   1,
+   1,
+   "304a"
+  ]
+ ],
+ "stations": {
+  "SIM1": {
+   "name": "Sim 1",
+   "accession": "HOUSIM1",
+   "passwordAccess": "CHANGEME",
+   "passwordEdit": "CHANGEME"
+  },
+  "SIM2": {
+   "name": "Sim 2",
+   "accession": "HOUSIM2",
+   "passwordAccess": "CHANGEME",
+   "passwordEdit": "CHANGEME"
+  },
+  "SIM3": {
+   "name": "Sim 3",
+   "accession": "HOUSIM3",
+   "passwordAccess": "CHANGEME",
+   "passwordEdit": "CHANGEME"
+  },
+  "SIM4": {
+   "name": "Sim 4",
+   "accession": "HOUSIM4",
+   "passwordAccess": "CHANGEME",
+   "passwordEdit": "CHANGEME"
+  }
+ }
+}

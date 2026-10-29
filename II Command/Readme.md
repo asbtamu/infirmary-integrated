@@ -65,6 +65,30 @@ room machines (remembered in the layout thereafter) and an output folder, and II
 `<Room name>.bat` per card with that room's accession, password and server baked in. Copy each to
 its room machine's desktop or Startup folder. Re-export after changing rooms or credentials.
 
+## Stations and updates (H:\Sim Techs\updates\ii)
+
+Everything for the lab lives in one share folder, filled by hand (e.g. from a USB drive):
+
+| File | What it is |
+|---|---|
+| `stations.json` | The room PCs, their fixed credentials and the floor plan (OSCEtime's board format). |
+| `manifest.json`, `II-SIM_x.y.z.zip`, `II-Command_x.y.z.zip` | Current builds, from `tools\Publish-Update.ps1`. |
+| `Install-Station.ps1` | One-time room PC setup. |
+
+- **+ Add Room** opens *Which stations?*: click rooms on the floor plan, then **Add and broadcast**.
+  They go live with their station credentials, so room PCs already waiting connect by themselves.
+  **Blank room** still makes an ad-hoc room.
+- **Room PC setup**, once per PC, signed in as the room's account:
+  `powershell -ExecutionPolicy Bypass -File "H:\Sim Techs\updates\ii\Install-Station.ps1" -Station SIM1`.
+  It installs II:SIM to `C:\Infirmary Integrated\II-SIM` and adds a Startup launcher for that station.
+- **Updates.** Bump `<Version>` in the `.csproj`, run `tools\Publish-Update.ps1 -Out <usb>\ii`, and copy
+  the folder onto the share. Each app checks at startup (before any window, so never mid-scenario),
+  installs a newer build, and relaunches. Logs are in `%LOCALAPPDATA%\Infirmary Integrated\updates\updater.log`.
+  The previous build is kept as `<install>.bak`. A file named `no-updates` in an install folder pins it.
+  Installs under Program Files can't update themselves; use `C:\Infirmary Integrated\`.
+- The share must be **read-only** to station accounts: write access to it is code execution on every
+  station, and `stations.json` holds the edit passwords.
+
 ## Session logs and debriefs
 
 Every scenario load starts a log for that room, written as it happens to

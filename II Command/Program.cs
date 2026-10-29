@@ -24,6 +24,9 @@ namespace IICMD {
             System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
             System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
+            if (II.Updater.TryUpdate ("command", args))     // Newer build on the share: swap and relaunch
+                return;
+
             BuildAvaloniaApp ()
             .StartWithClassicDesktopLifetime (args);
         }

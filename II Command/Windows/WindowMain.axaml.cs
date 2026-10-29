@@ -173,8 +173,34 @@ namespace IICMD {
 
         /* Toolbar actions */
 
-        private async void OnClick_AddRoom (object? s, RoutedEventArgs e)
-            => await AddRoom ();
+        /* "Which stations?": picked stations are added with their fixed credentials and go live at
+         * once, so their room PCs (already waiting at the launcher) connect without another click */
+        private async void OnClick_AddRoom (object? s, RoutedEventArgs e) {
+            StationMap? map = StationMap.Load ();
+
+            if (map is null) {
+                await AddRoom ();
+                return;
+            }
+
+            HashSet<string> inUse = new (Instance?.Sessions.Select (rs => rs.Mirror.Accession) ?? Enumerable.Empty<string> (),
+                StringComparer.OrdinalIgnoreCase);
+
+            DialogStations dlg = new (map, inUse);
+            await dlg.ShowDialog (this);
+
+            if (dlg.Blank) {
+                await AddRoom ();
+                return;
+            }
+
+            foreach (StationMap.Station st in dlg.Picked) {
+                RoomCard? card = await AddRoom (null, st.Name, st.Accession, st.PasswordAccess, st.PasswordEdit);
+
+                if (card is not null)
+                    await Broadcast (card);
+            }
+        }
 
         /* Shared by the per-card "Scenario…" button */
         public async Task<string?> PickScenarioFile () {
@@ -370,20 +396,24 @@ namespace IICMD {
         }
 
         private async void OnClick_BroadcastAll (object? s, RoutedEventArgs e) {
-            foreach (RoomCard card in _Cards) {
-                if (card.Session is not null && !card.Session.IsBroadcasting) {
-                    Server.ServerResponse resp = await card.Session.StartBroadcast (
-                        ServerAddress,
-                        card.Session.Mirror.Accession,
-                        card.Session.Mirror.PasswordAccess,
-                        card.Session.Mirror.PasswordEdit);
+            foreach (RoomCard card in _Cards.ToList ())
+                await Broadcast (card);
+        }
 
-                    if (resp == Server.ServerResponse.Success)
-                        card.RefreshBroadcastStatus ();
-                    else
-                        card.ShowBroadcastError (resp);
-                }
-            }
+        private async Task Broadcast (RoomCard card) {
+            if (card.Session is null || card.Session.IsBroadcasting)
+                return;
+
+            Server.ServerResponse resp = await card.Session.StartBroadcast (
+                ServerAddress,
+                card.Session.Mirror.Accession,
+                card.Session.Mirror.PasswordAccess,
+                card.Session.Mirror.PasswordEdit);
+
+            if (resp == Server.ServerResponse.Success)
+                card.RefreshBroadcastStatus ();
+            else
+                card.ShowBroadcastError (resp);
         }
     }
 }

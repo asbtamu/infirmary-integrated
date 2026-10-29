@@ -343,3 +343,6 @@ OpenCover/
 # SimChart EHR source snapshot: a separate project, kept here for integration scoping only
 simchart-source/
 simchart-source-*.zip
+
+# Update packages and stations.json (credentials) for H:\Sim Techs\updates\ii
+updates-out/

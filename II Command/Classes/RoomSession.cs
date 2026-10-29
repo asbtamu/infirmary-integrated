@@ -370,14 +370,23 @@ namespace IICMD {
             }
         }
 
+        /* Logged only on a real change: a debrief reader takes a "resume" on a running timer for an intervention */
         public async Task PauseStepTimer () {
-            Log?.Add ("step_timer_pause", StepName (Scenario?.Current));
-            await (Scenario?.PauseStep () ?? Task.CompletedTask);
+            if (Scenario is null)
+                return;
+
+            if (!Scenario.ProgressTimer.IsPaused)
+                Log?.Add ("step_timer_pause", StepName (Scenario.Current));
+            await Scenario.PauseStep ();
         }
 
         public async Task PlayStepTimer () {
-            Log?.Add ("step_timer_resume", StepName (Scenario?.Current));
-            await (Scenario?.PlayStep () ?? Task.CompletedTask);
+            if (Scenario is null)
+                return;
+
+            if (Scenario.ProgressTimer.IsPaused)
+                Log?.Add ("step_timer_resume", StepName (Scenario.Current));
+            await Scenario.PlayStep ();
         }
 
         /* Called every few seconds by the dashboard so the debrief has a vitals trace */

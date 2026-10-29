@@ -28,6 +28,7 @@
   <ItemGroup>
     <!-- Plain C# (no UI), so II Command's session log is tested directly -->
     <Compile Include="..\II Command\Classes\SessionLog.cs" Link="Linked\SessionLog.cs" />
+    <Compile Include="..\II Command\Classes\StationMap.cs" Link="Linked\StationMap.cs" />
   </ItemGroup>
 
   <Import Project="..\II Library\II Library.projitems" Label="Shared" />

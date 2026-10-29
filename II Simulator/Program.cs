@@ -19,6 +19,9 @@ namespace IISIM {
             System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
             System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
+            if (II.Updater.TryUpdate ("sim", args))         // Newer build on the share: swap and relaunch
+                return;
+
             BuildAvaloniaApp ()
             .StartWithClassicDesktopLifetime (args);
         }

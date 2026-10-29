@@ -1,0 +1,32 @@
+<Window
+	x:Class="IICMD.DialogStations"
+	xmlns="https://github.com/avaloniaui"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	Title="Which stations?"
+	SizeToContent="WidthAndHeight"
+	CanResize="False"
+	WindowStartupLocation="CenterOwner"
+	mc:Ignorable="d">
+
+  <StackPanel Margin="14" Spacing="8">
+
+    <TextBlock
+			Text="Click the rooms to run. They are added and go live; each room PC connects on its own."
+			TextWrapping="Wrap"
+			MaxWidth="640"
+			Foreground="DimGray" />
+
+    <!-- Floor plan, built in code from stations.json -->
+    <Grid Name="gridPlan" />
+
+    <TextBlock Name="txtSource" FontSize="11" Foreground="Gray" />
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+      <Button Name="btnBlank" Content="Blank room" ToolTip.Tip="A room with placeholder credentials, not tied to a station" Click="OnClick_Blank" />
+      <Button Name="btnCancel" Content="Cancel" Click="OnClick_Cancel" />
+      <Button Name="btnAdd" Content="Add and broadcast" IsEnabled="False" Click="OnClick_Add" />
+    </StackPanel>
+  </StackPanel>
+</Window>
